@@ -85,42 +85,35 @@ void loop()
 
 	int luminosidade = analogRead(A0);
 
-	//client.println("http/1.1 200 OK");
-	//client.println("Content-Type: text/html");
-	//client.println("");
+	String retorno = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n\r";
+	client.print(retorno);
 
-	String retorno = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE HTML>\r\n<html>\r\n";
-
+	String json = "{";   //Inicio do JSON
+	json += "\"led1\":"; //Campo led1
 	if (digitalRead(led1))
 	{
-		//client.print("l1on");
-		retorno += "l1on";
+		json += "\"on\"";
 	}
 	else
 	{
-		//client.print("l1off");
-		retorno += "l1off";
+		json += "\"off\"";
 	}
-	//client.println(",");
-	retorno += ",";
-
+	json += ",";
+	json += "\"led2\":"; //Campo led2
 	if (digitalRead(led2))
 	{
-		//client.print("l2on");
-		retorno += "l2on";
+		json += "\"on\"";
 	}
 	else
 	{
-		//client.print("l2off");
-		retorno += "l2off";
+		json += "\"off\"";
 	}
-	//client.println(",");
-	retorno += ",";
-	//client.print(luminosidade);
-	retorno += luminosidade;
+	json += ",";
+	json += "\"luminosidade\":"; //Campo luminosidade
+	json += luminosidade;
+	json += "}"; //Fim do json
 
-	retorno += "</html>\n";
-	client.print(retorno);
+	client.print(json);
 	delay(1);
 	Serial.println("Client disonnected");
 }

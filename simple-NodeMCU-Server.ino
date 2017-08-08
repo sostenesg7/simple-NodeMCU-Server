@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 
 #define led1 5
 #define led2 2
@@ -14,7 +15,7 @@ IPAddress gateway(192, 168, 0, 1);
 //Mascara de rede da sua rede wifi
 IPAddress subnet(255, 255, 255, 0);
 
-WiFiServer server(80);
+ESP8266WebServer server(80);
 
 void setup()
 {
@@ -40,53 +41,53 @@ void setup()
 	Serial.println("");
 	Serial.println("WiFi Conectado");
 
+	//Espefifica qual ação realizar, dependendo da rota
+	//Nesse caso, a rota base é o próprio ip, ex: http://192.168.0.1/
+	server.on("/", handleNewClient);
 	// Start the server
 	server.begin();
 	Serial.println("Servidor Iniciado");
-
 	// Print the IP address
 	Serial.println(WiFi.localIP());
 }
 
 void loop()
 {
-	// Check if a client has connected
-	WiFiClient client = server.available();
-	if (!client)
+	server.handleClient();
+}
+
+void handleNewClient()
+{
+	Serial.println("Novo cliente Conectado");
+	//Exibe todos os argumentos, só para visualizar em caso de testes
+	String argumento;
+	for (int i = 0; i < server.args(); i++)
 	{
-		return;
+		argumento = "[" + (String)i + "]=" + server.argName(i);
+		Serial.println(argumento);
 	}
 
-	// Wait until the client sends some data
-	Serial.println("Novo Cliente");
-	while (!client.available())
-	{
-		delay(1);
-	}
+	//Trata os parametros passados por quem fez a requisicao
 
-	// Read the first line of the request
-	String request = client.readStringUntil('\r');
-	Serial.println(request);
-	client.flush();
-
-	if (request.indexOf("led1") != -1)
+	//Por exemplo, um GET: http://192.168.0.120/?led1=on&led2=off
+	if (server.arg("led1") != "")
 	{
+		//acao aqui
 		digitalWrite(led1, !digitalRead(led1));
 	}
-	if (request.indexOf("led2") != -1)
+	if (server.arg("led2") != "")
 	{
+		//acao aqui
 		digitalWrite(led2, !digitalRead(led2));
 	}
-	if (request.indexOf("todos") != -1)
+	if (server.arg("todos") != "")
 	{
+		//acao aqui
 		digitalWrite(led1, !digitalRead(led1));
 		digitalWrite(led2, !digitalRead(led2));
 	}
 
 	int luminosidade = analogRead(A0);
-
-	String retorno = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n\r";
-	client.print(retorno);
 
 	String json = "{";   //Inicio do JSON
 	json += "\"led1\":"; //Campo led1
@@ -113,7 +114,8 @@ void loop()
 	json += luminosidade;
 	json += "}"; //Fim do json
 
-	client.print(json);
-	delay(1);
-	Serial.println("Client disonnected");
+	//	client.print(json);
+	//envia os dados para quem fez a requisicao
+	server.send(200, "application/json", json);
+	Serial.println("Client disconnected");
 }
